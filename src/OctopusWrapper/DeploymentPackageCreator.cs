@@ -1,5 +1,4 @@
-﻿using System.Linq;
-
+﻿
 namespace NuGetPackager
 {
     using System;
@@ -11,23 +10,21 @@ namespace NuGetPackager
         readonly string nugetsFolderFullPath;
         readonly string chocosFolderFullPath;
         readonly string deployFolderFullPath;
-        readonly string packagesFolderFullPath;
         readonly string productName;
         readonly string version;
         readonly string branch;
 
-        public DeploymentPackageCreator(string nugetsFolderFullPath, string chocosFolderFullPath, string deployFolderFullPath, string packagesFolderFullPath, string productName, string version, string branch)
+        public DeploymentPackageCreator(string nugetsFolderFullPath, string chocosFolderFullPath, string deployFolderFullPath, string productName, string version, string branch)
         {
             this.chocosFolderFullPath = chocosFolderFullPath;
             this.nugetsFolderFullPath = nugetsFolderFullPath;
             this.deployFolderFullPath = deployFolderFullPath;
-            this.packagesFolderFullPath = packagesFolderFullPath;
             this.productName = productName;
             this.version = version;
             this.branch = branch;
         }
 
-        public void CreateDeploymentPackages()
+        public void CreateDeploymentPackage()
         {
             foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nupkg"))
             {
@@ -66,7 +63,6 @@ namespace NuGetPackager
             };
             packageBuilder.Authors.Add("Particular Software");
             AddScript(packageBuilder, GenerateMetadataScript(), "Metadata.ps1");
-            AddTools(packageBuilder);
             AddContent(packageBuilder);
             SavePackage(packageBuilder, deployFolderFullPath, ".nupkg", "Package created -> {0}");
         }
@@ -82,7 +78,7 @@ $Version = ""{1}""
 $Product = ""{2}""
 $Major = ""{3}""
 $Minor = ""{4}""
-", branch, major, minor, version, productName);
+", branch, version, productName, major, minor);
         }
 
         void AddContent(PackageBuilder packageBuilder)
@@ -97,37 +93,6 @@ $Minor = ""{4}""
             }
         }
 
-        void AddTools(PackageBuilder packageBuilder)
-        {
-            var tools = new[]
-            {
-                "NuGet.exe",
-                "ReleaseNotesCompiler.CLI.exe",
-                "ConsoleTweet.exe"
-            };
-
-            var toolLocations = tools.Select(FindTool).ToList();
-
-            if (toolLocations.All(loc => loc != null))
-            {
-                packageBuilder.PopulateFiles("", toolLocations.Select(loc => new ManifestFile
-                {
-                    Source = loc,
-                    Target = "tools"
-                }).ToArray());
-            }
-        }
-
-        string FindTool(string name)
-        {
-            var nugetCLI = Directory.GetFiles(packagesFolderFullPath, name, SearchOption.AllDirectories).FirstOrDefault();
-            if (string.IsNullOrEmpty(nugetCLI))
-            {
-                throw new Exception(string.Format("Could not find tool '{0}' in '{1}' for deployment script.", name, packagesFolderFullPath));
-            }
-            return nugetCLI;
-        }
-
         void AddScript(PackageBuilder packageBuilder, string scriptBody, string scriptName)
         {
             var deployFile = Path.Combine(Path.GetTempPath(), scriptName);
@@ -140,13 +105,13 @@ $Minor = ""{4}""
             var filename = Path.Combine(destinationFolder, packageBuilder.GetFullName()) + filenameSuffix;
 
             if (!Directory.Exists(destinationFolder))
+            {
                 Directory.CreateDirectory(destinationFolder);
-
+            }
             using (var file = new FileStream(filename, FileMode.Create))
             {
                 packageBuilder.Save(file);
             }
-
             Console.WriteLine(logMessage, filename);
         }
     }

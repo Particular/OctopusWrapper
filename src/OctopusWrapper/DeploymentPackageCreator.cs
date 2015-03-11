@@ -26,15 +26,20 @@ namespace NuGetPackager
 
         public void CreateDeploymentPackage()
         {
-            foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nupkg"))
+            if (Directory.Exists(nugetsFolderFullPath))
             {
-                File.Copy(nupkg, nupkg + ".nzip", true);
+                foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nupkg"))
+                {
+                    File.Copy(nupkg, nupkg + ".nzip", true);
+                }
             }
-            foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.nupkg"))
+            if (Directory.Exists(chocosFolderFullPath))
             {
-                File.Copy(nupkg, nupkg + ".czip", true);
+                foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.nupkg"))
+                {
+                    File.Copy(nupkg, nupkg + ".czip", true);
+                }
             }
-
             try
             {
                 CreateDeployPackage(productName + ".Deploy", "Octopus package for release " + productName + ".");
@@ -42,13 +47,19 @@ namespace NuGetPackager
             finally
             {
                 // Clean up
-                foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nzip"))
+                if (Directory.Exists(nugetsFolderFullPath))
                 {
-                    File.Delete(nupkg);
+                    foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nzip"))
+                    {
+                        File.Delete(nupkg);
+                    }
                 }
-                foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.czip"))
+                if (Directory.Exists(chocosFolderFullPath))
                 {
-                    File.Delete(nupkg);
+                    foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.czip"))
+                    {
+                        File.Delete(nupkg);
+                    }
                 }
             }
         }

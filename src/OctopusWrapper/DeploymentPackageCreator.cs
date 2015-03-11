@@ -63,7 +63,7 @@ namespace NuGetPackager
                 }
             }
         }
-        
+
         void CreateDeployPackage(string id, string description)
         {
             var packageBuilder = new PackageBuilder
@@ -94,13 +94,33 @@ $Minor = ""{4}""
 
         void AddContent(PackageBuilder packageBuilder)
         {
-            foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nzip"))
+            if (Directory.Exists(nugetsFolderFullPath))
             {
-                packageBuilder.PopulateFiles("", new[] { new ManifestFile { Source = nupkg, Target = "content" } });
+                foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nzip"))
+                {
+                    packageBuilder.PopulateFiles("", new[]
+                    {
+                        new ManifestFile
+                        {
+                            Source = nupkg,
+                            Target = "content"
+                        }
+                    });
+                }
             }
-            foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.czip"))
+            if (Directory.Exists(chocosFolderFullPath))
             {
-                packageBuilder.PopulateFiles("", new[] { new ManifestFile { Source = nupkg, Target = "content" } });
+                foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.czip"))
+                {
+                    packageBuilder.PopulateFiles("", new[]
+                    {
+                        new ManifestFile
+                        {
+                            Source = nupkg,
+                            Target = "content"
+                        }
+                    });
+                }
             }
         }
 
@@ -114,11 +134,12 @@ $Minor = ""{4}""
         void SavePackage(PackageBuilder packageBuilder, string destinationFolder, string filenameSuffix, string logMessage)
         {
             var filename = Path.Combine(destinationFolder, packageBuilder.GetFullName()) + filenameSuffix;
-
-            if (!Directory.Exists(destinationFolder))
+            if (Directory.Exists(destinationFolder))
             {
-                Directory.CreateDirectory(destinationFolder);
+                Directory.Delete(destinationFolder, true);
             }
+            Directory.CreateDirectory(destinationFolder);
+
             using (var file = new FileStream(filename, FileMode.Create))
             {
                 packageBuilder.Save(file);

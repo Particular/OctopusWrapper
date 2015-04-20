@@ -9,15 +9,17 @@ namespace NuGetPackager
     {
         readonly string nugetsFolderFullPath;
         readonly string chocosFolderFullPath;
+        readonly string assetsFolderFullPath;
         readonly string deployFolderFullPath;
         readonly string productName;
         readonly string version;
         readonly string branch;
 
-        public DeploymentPackageCreator(string nugetsFolderFullPath, string chocosFolderFullPath, string deployFolderFullPath, string productName, string version, string branch)
+        public DeploymentPackageCreator(string nugetsFolderFullPath, string chocosFolderFullPath, string assetsFolderFullPath, string deployFolderFullPath, string productName, string version, string branch)
         {
-            this.chocosFolderFullPath = chocosFolderFullPath;
             this.nugetsFolderFullPath = nugetsFolderFullPath;
+            this.chocosFolderFullPath = chocosFolderFullPath;
+            this.assetsFolderFullPath = assetsFolderFullPath;
             this.deployFolderFullPath = deployFolderFullPath;
             this.productName = productName;
             this.version = version;
@@ -117,6 +119,20 @@ $Minor = ""{4}""
                         new ManifestFile
                         {
                             Source = nupkg,
+                            Target = "content"
+                        }
+                    });
+                }
+            }
+            if (Directory.Exists(assetsFolderFullPath))
+            {
+                foreach (var asset in Directory.GetFiles(assetsFolderFullPath))
+                {
+                    packageBuilder.PopulateFiles("", new[]
+                    {
+                        new ManifestFile
+                        {
+                            Source = asset,
                             Target = "content"
                         }
                     });

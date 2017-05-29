@@ -17,7 +17,6 @@
 
             var packageCreator = new DeploymentPackageCreator(
                 Path.Combine(Environment.CurrentDirectory, "nugets"),
-                Path.Combine(Environment.CurrentDirectory, "chocos"),
                 Path.Combine(Environment.CurrentDirectory, "assets"),
                 Path.Combine(Environment.CurrentDirectory, "deploy"),
                 args[0], args[1], args[2]

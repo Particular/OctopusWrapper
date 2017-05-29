@@ -8,17 +8,15 @@ namespace NuGetPackager
     class DeploymentPackageCreator
     {
         readonly string nugetsFolderFullPath;
-        readonly string chocosFolderFullPath;
         readonly string assetsFolderFullPath;
         readonly string deployFolderFullPath;
         readonly string productName;
         readonly string version;
         readonly string branch;
 
-        public DeploymentPackageCreator(string nugetsFolderFullPath, string chocosFolderFullPath, string assetsFolderFullPath, string deployFolderFullPath, string productName, string version, string branch)
+        public DeploymentPackageCreator(string nugetsFolderFullPath, string assetsFolderFullPath, string deployFolderFullPath, string productName, string version, string branch)
         {
             this.nugetsFolderFullPath = nugetsFolderFullPath;
-            this.chocosFolderFullPath = chocosFolderFullPath;
             this.assetsFolderFullPath = assetsFolderFullPath;
             this.deployFolderFullPath = deployFolderFullPath;
             this.productName = productName;
@@ -35,13 +33,6 @@ namespace NuGetPackager
                     File.Copy(nupkg, nupkg + ".nzip", true);
                 }
             }
-            if (Directory.Exists(chocosFolderFullPath))
-            {
-                foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.nupkg"))
-                {
-                    File.Copy(nupkg, nupkg + ".czip", true);
-                }
-            }
             try
             {
                 CreateDeployPackage(productName + ".Deploy", "Octopus package for release " + productName + ".");
@@ -52,13 +43,6 @@ namespace NuGetPackager
                 if (Directory.Exists(nugetsFolderFullPath))
                 {
                     foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nzip"))
-                    {
-                        File.Delete(nupkg);
-                    }
-                }
-                if (Directory.Exists(chocosFolderFullPath))
-                {
-                    foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.czip"))
                     {
                         File.Delete(nupkg);
                     }
@@ -86,12 +70,12 @@ namespace NuGetPackager
             var major = versionParts[0];
             var minor = versionParts[1];
 
-            return string.Format(@"$Branch = ""{0}""
-$Version = ""{1}""
-$Product = ""{2}""
-$Major = ""{3}""
-$Minor = ""{4}""
-", branch, version, productName, major, minor);
+            return $@"$Branch = ""{branch}""
+$Version = ""{version}""
+$Product = ""{productName}""
+$Major = ""{major}""
+$Minor = ""{minor}""
+";
         }
 
         void AddContent(PackageBuilder packageBuilder)
@@ -99,20 +83,6 @@ $Minor = ""{4}""
             if (Directory.Exists(nugetsFolderFullPath))
             {
                 foreach (var nupkg in Directory.GetFiles(nugetsFolderFullPath, "*.nzip"))
-                {
-                    packageBuilder.PopulateFiles("", new[]
-                    {
-                        new ManifestFile
-                        {
-                            Source = nupkg,
-                            Target = "content"
-                        }
-                    });
-                }
-            }
-            if (Directory.Exists(chocosFolderFullPath))
-            {
-                foreach (var nupkg in Directory.GetFiles(chocosFolderFullPath, "*.czip"))
                 {
                     packageBuilder.PopulateFiles("", new[]
                     {
@@ -140,14 +110,14 @@ $Minor = ""{4}""
             }
         }
 
-        void AddScript(PackageBuilder packageBuilder, string scriptBody, string scriptName)
+        static void AddScript(PackageBuilder packageBuilder, string scriptBody, string scriptName)
         {
             var deployFile = Path.Combine(Path.GetTempPath(), scriptName);
             File.WriteAllText(deployFile, scriptBody);
             packageBuilder.PopulateFiles("", new[] { new ManifestFile { Source = deployFile, Target = scriptName } });
         }
 
-        void SavePackage(PackageBuilder packageBuilder, string destinationFolder, string filenameSuffix, string logMessage)
+        static void SavePackage(PackageBuilder packageBuilder, string destinationFolder, string filenameSuffix, string logMessage)
         {
             var filename = Path.Combine(destinationFolder, packageBuilder.GetFullName()) + filenameSuffix;
             if (Directory.Exists(destinationFolder))

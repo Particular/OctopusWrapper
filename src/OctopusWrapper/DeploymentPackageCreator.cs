@@ -13,8 +13,9 @@ namespace NuGetPackager
         readonly string productName;
         readonly string version;
         readonly string branch;
+        readonly string commitHash;
 
-        public DeploymentPackageCreator(string nugetsFolderFullPath, string assetsFolderFullPath, string deployFolderFullPath, string productName, string version, string branch)
+        public DeploymentPackageCreator(string nugetsFolderFullPath, string assetsFolderFullPath, string deployFolderFullPath, string productName, string version, string branch, string commitHash)
         {
             this.nugetsFolderFullPath = nugetsFolderFullPath;
             this.assetsFolderFullPath = assetsFolderFullPath;
@@ -22,6 +23,7 @@ namespace NuGetPackager
             this.productName = productName;
             this.version = version;
             this.branch = branch;
+            this.commitHash = commitHash;
         }
 
         public void CreateDeploymentPackage()
@@ -70,12 +72,20 @@ namespace NuGetPackager
             var major = versionParts[0];
             var minor = versionParts[1];
 
-            return $@"$Branch = ""{branch}""
+            var meta = 
+$@"$Branch = ""{branch}""
 $Version = ""{version}""
 $Product = ""{productName}""
 $Major = ""{major}""
 $Minor = ""{minor}""
 ";
+            if (commitHash != null)
+            {
+                meta += 
+$@"$Commit = ""{commitHash}""
+";
+            }
+            return meta;
         }
 
         void AddContent(PackageBuilder packageBuilder)

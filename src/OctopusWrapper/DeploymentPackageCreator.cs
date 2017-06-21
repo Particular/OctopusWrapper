@@ -8,22 +8,20 @@ namespace NuGetPackager
     class DeploymentPackageCreator
     {
         readonly string nugetsFolderFullPath;
-        readonly string assetsFolderFullPath;
+        readonly string metadataFolderFullPath;
         readonly string deployFolderFullPath;
         readonly string productName;
         readonly string version;
         readonly string branch;
-        readonly string commitHash;
 
-        public DeploymentPackageCreator(string nugetsFolderFullPath, string assetsFolderFullPath, string deployFolderFullPath, string productName, string version, string branch, string commitHash)
+        public DeploymentPackageCreator(string nugetsFolderFullPath, string metadataFolderFullPath, string deployFolderFullPath, string productName, string version, string branch, string commitHash)
         {
             this.nugetsFolderFullPath = nugetsFolderFullPath;
-            this.assetsFolderFullPath = assetsFolderFullPath;
+            this.metadataFolderFullPath = metadataFolderFullPath;
             this.deployFolderFullPath = deployFolderFullPath;
             this.productName = productName;
             this.version = version;
             this.branch = branch;
-            this.commitHash = commitHash;
         }
 
         public void CreateDeploymentPackage()
@@ -72,20 +70,12 @@ namespace NuGetPackager
             var major = versionParts[0];
             var minor = versionParts[1];
 
-            var meta = 
-$@"$Branch = ""{branch}""
+            return $@"$Branch = ""{branch}""
 $Version = ""{version}""
 $Product = ""{productName}""
 $Major = ""{major}""
 $Minor = ""{minor}""
 ";
-            if (commitHash != null)
-            {
-                meta += 
-$@"$Commit = ""{commitHash}""
-";
-            }
-            return meta;
         }
 
         void AddContent(PackageBuilder packageBuilder)
@@ -104,27 +94,17 @@ $@"$Commit = ""{commitHash}""
                     });
                 }
             }
-            if (Directory.Exists(assetsFolderFullPath))
-            {
-                foreach (var asset in Directory.GetFiles(assetsFolderFullPath))
-                {
-                    packageBuilder.PopulateFiles("", new[]
-                    {
-                        new ManifestFile
-                        {
-                            Source = asset,
-                            Target = "content"
-                        }
-                    });
-                }
-            }
         }
 
-        static void AddScript(PackageBuilder packageBuilder, string scriptBody, string scriptName)
+        void AddScript(PackageBuilder packageBuilder, string scriptBody, string scriptName)
         {
-            var deployFile = Path.Combine(Path.GetTempPath(), scriptName);
-            File.WriteAllText(deployFile, scriptBody);
-            packageBuilder.PopulateFiles("", new[] { new ManifestFile { Source = deployFile, Target = scriptName } });
+            var metadataFile = Path.Combine(metadataFolderFullPath, scriptName);
+            if (!File.Exists(metadataFile))
+            {
+                metadataFile = Path.Combine(Path.GetTempPath(), scriptName);
+                File.WriteAllText(metadataFile, scriptBody);
+            }
+            packageBuilder.PopulateFiles("", new[] { new ManifestFile { Source = metadataFile, Target = scriptName } });
         }
 
         static void SavePackage(PackageBuilder packageBuilder, string destinationFolder, string filenameSuffix, string logMessage)

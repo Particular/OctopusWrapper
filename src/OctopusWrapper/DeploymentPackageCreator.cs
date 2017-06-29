@@ -8,15 +8,17 @@ namespace NuGetPackager
     class DeploymentPackageCreator
     {
         readonly string nugetsFolderFullPath;
+        readonly string assetsFolderFullPath;
         readonly string metadataFolderFullPath;
         readonly string deployFolderFullPath;
         readonly string productName;
         readonly string version;
         readonly string branch;
 
-        public DeploymentPackageCreator(string nugetsFolderFullPath, string metadataFolderFullPath, string deployFolderFullPath, string productName, string version, string branch, string commitHash)
+        public DeploymentPackageCreator(string nugetsFolderFullPath, string assetsFolderFullPath, string metadataFolderFullPath, string deployFolderFullPath, string productName, string version, string branch, string commitHash)
         {
             this.nugetsFolderFullPath = nugetsFolderFullPath;
+            this.assetsFolderFullPath = assetsFolderFullPath;
             this.metadataFolderFullPath = metadataFolderFullPath;
             this.deployFolderFullPath = deployFolderFullPath;
             this.productName = productName;
@@ -89,6 +91,20 @@ $Minor = ""{minor}""
                         new ManifestFile
                         {
                             Source = nupkg,
+                            Target = "content"
+                        }
+                    });
+                }
+            }
+            if (Directory.Exists(assetsFolderFullPath))
+            {
+                foreach (var asset in Directory.GetFiles(assetsFolderFullPath))
+                {
+                    packageBuilder.PopulateFiles("", new[]
+                    {
+                        new ManifestFile
+                        {
+                            Source = asset,
                             Target = "content"
                         }
                     });
